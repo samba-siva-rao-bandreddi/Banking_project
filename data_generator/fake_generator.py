@@ -1,55 +1,36 @@
 import time
 import psycopg2
-from faker import Faker
+from faker import Faker 
 import sys
 import os
+from pathlib import Path 
 import argparse
 import random
-from pathlib import Path
-from decimal import Decimal, ROUND_DOWN
 from dotenv import load_dotenv
+from decimal import Decimal, ROUND_DOWN
 
-# Load local .env first (for Windows scripts), fallback to root .env
-local_env = Path(__file__).parent / '.env'
-root_env = Path(__file__).parent.parent / '.env'
-if local_env.exists():
-    load_dotenv(local_env)
-else:
-    load_dotenv(root_env)
+root_dir=Path(__file__).parent.parent / '.env'
+load_dotenv(root_dir)
+
 
 
 NUM_CUSTOMERS = 10
 ACCOUNTS_PER_CUSTOMER = 2
 NUM_TRANSACTIONS = 50
 MAX_TXN_AMOUNT = 1000.00
-CURRENCY = "USD"
-
-
+CURRENCY = "INR"
 INITIAL_BALANCE_MIN = Decimal("10.00")
 INITIAL_BALANCE_MAX = Decimal("1000.00")
-
-
-
 # Loop config
 DEFAULT_LOOP = True
-SLEEP_SECONDS = 3
+SLEEP_SECONDS = 2
 
-
+# CLI override (run once mode)
 parser = argparse.ArgumentParser(description="Run fake data generator")
 parser.add_argument("--once", action="store_true", help="Run a single iteration and exit")
 args = parser.parse_args()
 LOOP = not args.once and DEFAULT_LOOP
 
-
-# Helpers
-fake = Faker()
-
-def random_money(min_val: Decimal, max_val: Decimal) -> Decimal:
-    val = Decimal(str(random.uniform(float(min_val), float(max_val))))
-    return val.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
-
-
-# Connect to Postgres
 conn = psycopg2.connect(
     host=os.getenv("POSTGRES_HOST"),
     port=os.getenv("POSTGRES_PORT"),
@@ -59,8 +40,12 @@ conn = psycopg2.connect(
 )
 conn.autocommit = True
 cur = conn.cursor()
+# Helpers
+fake = Faker()
 
-
+def random_money(min_val: Decimal, max_val: Decimal) -> Decimal:
+    val = Decimal(str(random.uniform(float(min_val), float(max_val))))
+    return val.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
 def run_iteration():
     customers = []
@@ -76,7 +61,6 @@ def run_iteration():
         )
         customer_id = cur.fetchone()[0]
         customers.append(customer_id)
-
 
     # 2. Generate accounts
     accounts = []
@@ -102,12 +86,11 @@ def run_iteration():
             related_account = random.choice([a for a in accounts if a != account_id])
 
         cur.execute(
-            "INSERT INTO transactions (account_id, tnx_type, amount, related_acc_id, status) VALUES (%s, %s, %s, %s, 'COMPLETED')",
+            "INSERT INTO transactions (account_id, txn_type, amount, related_account_id, status) VALUES (%s, %s, %s, %s, 'COMPLETED')",
             (account_id, txn_type, amount, related_account),
         )
 
     print(f"✅ Generated {len(customers)} customers, {len(accounts)} accounts, {NUM_TRANSACTIONS} transactions.")
-
 
 
 # Main loop
