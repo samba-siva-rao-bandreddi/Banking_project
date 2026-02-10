@@ -43,7 +43,7 @@ s3 = boto3.client(
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
 )
 
-bucket = os.getenv("S3_BUCKET_NAME", "banking-project-data-lake")
+bucket = os.getenv("S3_BUCKET_NAME")
 
 # -----------------------------
 # Create bucket if not exists
