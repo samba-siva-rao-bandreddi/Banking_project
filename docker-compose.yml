@@ -14,7 +14,7 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"   # internal Docker network
+      - "9092:9092" # internal Docker network
       - "29092:29092" # host machine access
     environment:
       KAFKA_BROKER_ID: 1
@@ -26,7 +26,6 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-
 
   connect:
     image: debezium/connect:2.2
@@ -54,14 +53,13 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - ./docker/postgres/data:/var/lib/postgresql/data
     command: >
       postgres -c wal_level=logical
               -c max_wal_senders=10
-              -c max_replication_slots=10
-               
+              -c max_replication_slots=10   
   # NOTE: Using AWS S3 for storage instead of MinIO
   # Configure in .env: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME
 
@@ -82,7 +80,7 @@ services:
       - ./docker/plugins:/opt/airflow/plugins
     entrypoint: /bin/bash
     command: -c "airflow db init && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true"
-    
+
   airflow-webserver:
     build:
       context: .
@@ -129,8 +127,6 @@ services:
       - ./banking_dbt/.dbt:/home/airflow/.dbt
     command: scheduler
 
-
-
   airflow-postgres:
     image: postgres:15
     container_name: airflow-postgres
@@ -142,7 +138,7 @@ services:
     volumes:
       - airflow_postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"  # separate from banking-postgres to avoid conflict
+      - "5433:5432" # separate from banking-postgres to avoid conflict
 
 volumes:
   airflow_postgres_data:
