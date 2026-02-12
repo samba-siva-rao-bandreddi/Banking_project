@@ -18,7 +18,7 @@ load_dotenv(dotenv_path)
 # Kafka consumer settings
 # -----------------------------
 print(f"🔧 Connecting to Kafka at: {os.getenv('KAFKA_BOOTSTRAP', 'localhost:29092')}")
-print(f"🔧 Consumer group: {os.getenv('KAFKA_GROUP', 'banking-s3-consumer')}")
+print(f"🔧 Consumer group: {os.getenv('KAFKA_GROUP', 'banking-s3-consumer-v2')}")
 
 consumer = KafkaConsumer(
     'banking_server.public.customers',
@@ -27,10 +27,10 @@ consumer = KafkaConsumer(
     bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP", "localhost:29092"),
     auto_offset_reset='earliest',
     enable_auto_commit=True,
-    group_id=os.getenv("KAFKA_GROUP", "banking-s3-consumer"),
+    group_id=os.getenv("KAFKA_GROUP", "debezium-s3-sink-group"),
     value_deserializer=lambda x: json.loads(x.decode('utf-8')),
     consumer_timeout_ms=60000,  # Timeout after 60 seconds if no messages
-    api_version=(2, 5, 0)  # Explicit API version for compatibility
+    api_version=(2, 5, 0)
 )
 
 # -----------------------------
@@ -86,11 +86,12 @@ buffer = {
 }
 
 print("✅ Connected to Kafka. Listening for messages...")
-
 for message in consumer:
+    
     topic = message.topic
     event = message.value
     payload = event.get("payload", {})
+    #print(payload)
     record = payload.get("after")  # Only take the actual row
 
     if record:
