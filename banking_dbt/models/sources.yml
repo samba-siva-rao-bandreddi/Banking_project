@@ -1,0 +1,7 @@
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: customers
+      - name: accounts
+      - name: transactions
